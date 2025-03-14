@@ -17,7 +17,7 @@ packs_list = ['000']
 
 # Now I need to see what year the pack is being made in and store it as the pack prefix
 new_pack_prefix = str(date.today().year).removeprefix('20')
-
+ 
 def make_new_pack_suffix():
     """Check the last item in the packs list and assign the next number"""
 
