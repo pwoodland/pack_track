@@ -9,6 +9,13 @@ import sqlite3
 
 from qc_forms import Form, VTForm
 from packs import Pack
+from pymongo import MongoClient
+import pymongo
+
+MONGODB_URI = "mongodb+srv://admin:monkeybutt@cluster0.peilo.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+
+client = MongoClient(MONGODB_URI)
+database = client["pack_track"]
 
 # I currently have a datebase with one table, packs, with 3 columns
 # I also have a function that can get the next pack number
@@ -19,19 +26,23 @@ from packs import Pack
 def get_next_pack_number():
     """Check the pack id in the packs table and return the next number"""
 
-    # Connect and cursor
-    con = sqlite3.connect('packs.db')
-    cur = con.cursor()
-    # Get the latest pack number
-    last_pack = cur.execute("""SELECT pack_id FROM packs ORDER BY pack_id DESC""").fetchone()
-    
+
+    # # Connect and cursor
+    # con = sqlite3.connect('packs.db')
+    # cur = con.cursor()
+    # # Get the latest pack number
+    collection = database["packs"]
+    # must use sort parameter if using find_one as .sort() method is only available to a cursor instance
+    last_pack = collection.find_one({}, {"_id": 0, "pack_number": 1}, sort={"pack_number": pymongo.DESCENDING})
+    # last_pack = cur.execute("""SELECT pack_id FROM packs ORDER BY pack_id DESC""").fetchone()
+    print(last_pack)
     # Some strings to work with
     # Get the last two digits of the year
     new_pack_prefix = str(date.today().year).removeprefix('20')
     new_pack_suffix = ''
     new_pack_padding = '0'
     prefix_to_remove = new_pack_prefix + '-'
-    last_pack_stripped = last_pack[0].removeprefix(prefix_to_remove)
+    last_pack_stripped = last_pack['pack_number'].removeprefix(prefix_to_remove)
 
     # Find the padding to keep it 3 digits
     if int(last_pack_stripped) < 100:
@@ -44,11 +55,11 @@ def get_next_pack_number():
         new_pack_suffix = new_pack_padding + str(int(last_pack_stripped) + 1)
     
     next_pack_number = new_pack_prefix + '-' + new_pack_suffix
-    con.close()
 
+    print(next_pack_number)
     return next_pack_number
 
-# let's create a function to make a new pack
+# let's create a function to make a new pack - need to convert to mongodb; currently still SQL
 def add_new_pack_number():
     """ This function will add the new pack number to the database"""
     # Connect and cursor
@@ -59,7 +70,7 @@ def add_new_pack_number():
     con.close()
 
 # add_new_pack_number()
-
+get_next_pack_number()
 ##############################################################################
 # testing basic functionality 
 
