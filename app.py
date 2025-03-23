@@ -4,21 +4,48 @@
 # at the mill's weld shop
 ##############################################################################
 
-from datetime import date
+# got the read packs gui function to pull and display the pack info from the databse
+# next I want to update the create pack function to open a set of fields to collect info 
+# and submit to database
 
+
+from datetime import date
+from tkinter import *
+from tkinter import ttk
 # from qc_forms import Form, VTForm
 # from packs import Pack
 from pymongo import MongoClient, ReturnDocument
 import pymongo
 
+
+# GUI init
+root = Tk()
+root.title("PackTrack")
+mainframe = ttk.Frame(root, width=1200, height=800, padding=5)
+mainframe.grid(column=0, row=0, sticky=(N, S, E, W))
+buttons = ttk.Frame(mainframe, padding=(5,0))
+buttons.grid(column=0, row=0, sticky=(N, W))
+content = ttk.Frame(mainframe, borderwidth=2, relief="raised", padding=3)
+content.grid(column=1, row=0, sticky=(N, S, E, W))
+
+PACK_NUMBER_COL = 0
+REVISION_COL = 1
+FAB_WO_COL = 2
+INSTALL_WO_COL = 3
+WO_DESC_COL = 4
+UNIT_NO_COL = 5
+AREA_NO_COL = 6
+AREA_DESC_COL = 7
+
+# database connection
 MONGODB_URI = "mongodb+srv://admin:monkeybutt@cluster0.peilo.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 
 client = MongoClient(MONGODB_URI)
 database = client["pack_track"]
 collection = database["packs"]
 
-# Database CRUDs #
 
+# Database CRUDs #
 # CREATE
 # Making sure we don't skip or duplicate pack #s
 def get_next_pack_number(col):
@@ -50,7 +77,13 @@ def get_next_pack_number(col):
     return next_pack_number
 
 # Now to actually add it in the database
-def add_new_pack_number(col):
+# def add_new_pack_number(col):
+#     """ This function will add the new pack number to the database"""
+
+#     print("Adding pack number: ", get_next_pack_number(col))
+#     col.insert_one({"pack_number" : get_next_pack_number(col)})  
+
+def add_new_pack_number_gui(col):
     """ This function will add the new pack number to the database"""
 
     print("Adding pack number: ", get_next_pack_number(col))
@@ -67,6 +100,51 @@ def list_packs(col):
     for pack in results:
         print(pack)
 
+def list_packs_gui(col):
+    """ Find all packs in the database and create the table """
+
+    results = col.find({}, {"_id": 0, "func_location": 0, "func_location_description": 0, "op_short_text": 0, 
+                                   "planner_group": 0, "plant_area": 0, "sort_field": 0}
+                                   ).sort("pack_number", pymongo.ASCENDING)
+    # results_as_list = results.to_list()
+    # print(results)
+    # print(results_as_list)
+    i = 0
+    for pack in results:
+        i += 1
+        for k in pack:
+            if k == "pack_number":    
+                pack_number = pack[k]
+                pack_number_value = ttk.Label(content, text=pack_number)
+                pack_number_value.grid(column=PACK_NUMBER_COL, row=i)
+            elif k == "revision":
+                revision = pack[k]
+                revision_value = ttk.Label(content, text=revision)
+                revision_value.grid(column=REVISION_COL, row=i)
+            elif k == "fab_wo_number":
+                fab_wo = pack[k]
+                fab_wo_value = ttk.Label(content, text=fab_wo)
+                fab_wo_value.grid(column=FAB_WO_COL, row=i)
+            elif k == "install_wo_number":
+                install_wo = pack[k]
+                install_wo_value = ttk.Label(content, text=install_wo)
+                install_wo_value.grid(column=INSTALL_WO_COL, row=i)
+            elif k == "wo_description":
+                wo_description = pack[k]
+                wo_description_value = ttk.Label(content, text=wo_description)
+                wo_description_value.grid(column=WO_DESC_COL, row=i)
+            elif k == "unit_no":
+                unit_no = pack[k]
+                unit_no_value = ttk.Label(content, text=unit_no)
+                unit_no_value.grid(column=UNIT_NO_COL, row=i)
+            elif k == "plant_area":
+                area = pack[k]
+                area_value = ttk.Label(content, text=area)
+                area_value.grid(column=AREA_NO_COL, row=i)
+            elif k == "area_description":
+                area_description = pack[k]
+                area_description_value = ttk.Label(content, text=area_description)
+                area_description_value.grid(column=AREA_DESC_COL, row=i)
 
 # UPDATE
 
@@ -107,23 +185,56 @@ def delete_pack(col):
     else:
         print("Deletion cancelled")
 
+# creating buttons
+create_button = ttk.Button(buttons, text="Create Pack", width=10, command=lambda: add_new_pack_number_gui(collection))
+create_button.grid()
+read_button = ttk.Button(buttons, text="Read Packs", width=10, command=lambda: list_packs_gui(collection))
+read_button.grid()
+update_button = ttk.Button(buttons, text="Update Pack", width=10)
+update_button.grid()
+delete_button = ttk.Button(buttons, text="Delete Pack", width=10)
+delete_button.grid()
+
+# create main table labels
+pack_number_label = ttk.Label(content, text="Pack Number")
+pack_number_label.grid(column=0, row=0)
+pack_revision_label = ttk.Label(content, text="Revision")
+pack_revision_label.grid(column=1, row=0)
+fab_wo_label = ttk.Label(content, text="Fab Work Order")
+fab_wo_label.grid(column=2, row=0)
+install_wo_label = ttk.Label(content, text="Install Work Order")
+install_wo_label.grid(column=3, row=0)
+wo_description_label = ttk.Label(content, text="Work Order Description")
+wo_description_label.grid(column=4, row=0)
+unit_no_label = ttk.Label(content, text="Unit #")
+unit_no_label.grid(column=5, row=0)
+area_code_label = ttk.Label(content, text="Area")
+area_code_label.grid(column=6, row=0)
+area_description_label = ttk.Label(content, text="Description")
+area_description_label.grid(column=7, row=0)
+
+
+
+# Main Tkinter loop
+root.mainloop()
+client.close()
 # Main program loop
-running = True
-while running:
-    command = input("What would you like to do? (create / read / update / delete / quit: ")
-    if command == "quit":
-        running = False
-        client.close()
-    else:
-        match command:
-            case "create":
-                add_new_pack_number(collection)
-            case "read":
-                print("Here are all your packs:")
-                list_packs(collection)
-            case "update":
-                update_pack(collection)
-            case "delete":
-                delete_pack(collection)
-            case _:
-                print("Sorry that wasn't an option.")
+# running = True
+# while running:
+#     command = input("What would you like to do? (create / read / update / delete / quit: ")
+#     if command == "quit":
+#         running = False
+#         client.close()
+#     else:
+#         match command:
+#             case "create":
+#                 add_new_pack_number(collection)
+#             case "read":
+#                 print("Here are all your packs:")
+#                 list_packs(collection)
+#             case "update":
+#                 update_pack(collection)
+#             case "delete":
+#                 delete_pack(collection)
+#             case _:
+#                 print("Sorry that wasn't an option.")
