@@ -114,8 +114,11 @@ def list_packs_gui(col):
         i += 1
         for k in pack:
             if k == "pack_number":    
-                pack_number = pack[k]
-                pack_number_value = ttk.Label(content, text=pack_number)
+                # pack_number = pack[k]
+                # pack_str_var = StringVar(value=pack_number)
+                # pack_number_value = Entry(content, textvariable=pack_str_var, state="readonly")
+                pack_number = StringVar(value=pack[k])
+                pack_number_value = Entry(content, textvariable=pack_number, state="readonly", width=0)
                 pack_number_value.grid(column=PACK_NUMBER_COL, row=i)
             elif k == "revision":
                 revision = pack[k]
